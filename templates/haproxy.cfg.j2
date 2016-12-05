@@ -50,6 +50,12 @@ backend {{ haproxy_backend_name }}
 {% if haproxy_backend_httpchk != '' %}
     option httpchk {{ haproxy_backend_httpchk }}
 {% endif %}
+{% for acl in haproxy_backend_acls %}
+    acl {{ acl.name }} {{ acl.var }} -m {{ acl.module }} {{ acl.query }}
+{% endfor %}
+{% for condition in haproxy_backend_conditions %}
+    {{ condition.action }} {{ condition.operator }} {{ condition.acl }}
+{% endfor %}
     cookie SERVERID insert indirect
 {% for backend in haproxy_backend_servers %}
     server {{ backend.name }} {{ backend.address }} cookie {{ backend.name }} check
