@@ -1,4 +1,13 @@
 ---
+- name: haproxy repo
+  apt_repository:
+    repo: 'ppa:vbernat/haproxy-1.6'
+  when: ansible_distribution == 'Ubuntu' and haproxy_version == '1.6'
+
+- name: Ensure HAProxy is installed (Debian).
+  apt: name=liblua5.3-0 state=installed
+  when: ansible_distribution == 'Ubuntu' and haproxy_version == '1.6'
+
 - name: Ensure HAProxy is installed (Debian).
   apt: name=haproxy state=installed
   when: ansible_os_family == 'Debian'
@@ -24,6 +33,7 @@
 - name: Set HAProxy version.
   set_fact:
     haproxy_version: "{{ '1.5' if '1.5.' in haproxy_version_result.stdout else '1.4' }}"
+  when: haproxy_version is not defined
 
 - name: Copy HAProxy configuration in place.
   template:
