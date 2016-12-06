@@ -1,12 +1,6 @@
 ---
-- name: haproxy repo
-  apt_repository:
-    repo: 'ppa:vbernat/haproxy-1.6'
-  when: ansible_distribution == 'Ubuntu' and haproxy_version == '1.6'
-
-- name: Ensure HAProxy is installed (Debian).
-  apt: name=liblua5.3-0 state=installed
-  when: ansible_distribution == 'Ubuntu' and haproxy_version == '1.6'
+- include: enable_ppa_ubuntu.yml
+  when: ansible_distribution == 'Ubuntu' and haproxy_version|float >= 1.6
 
 - name: Ensure HAProxy is installed (Debian).
   apt: name=haproxy state=installed
