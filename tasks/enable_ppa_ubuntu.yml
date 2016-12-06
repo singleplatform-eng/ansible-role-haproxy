@@ -1,0 +1,7 @@
+
+- name: haproxy repo
+  apt_repository:
+    repo: 'ppa:vbernat/haproxy-{{ haproxy_version }}'
+
+- name: install liblua5.3-0
+  apt: name=liblua5.3-0 state=installed
