@@ -1,10 +1,6 @@
 # Ansible Role: HAProxy
 
-[![Build Status](https://travis-ci.org/geerlingguy/ansible-role-haproxy.svg?branch=master)](https://travis-ci.org/geerlingguy/ansible-role-haproxy)
-
 Installs HAProxy on RedHat/CentOS and Debian/Ubuntu Linux servers.
-
-**Note**: This role _officially_ supports HAProxy versions 1.4 or 1.5. Future versions may require some rework.
 
 ## Requirements
 
@@ -13,6 +9,10 @@ None.
 ## Role Variables
 
 Available variables are listed below, along with default values (see `defaults/main.yml`):
+
+    haproxy_version: 1.6
+
+This will default to the platform default if you don't set it. 1.6+ enables additional config options.
 
     haproxy_socket: /var/lib/haproxy/stats
 
@@ -27,6 +27,15 @@ The jail directory where chroot() will be performed before dropping privileges. 
 
 The user and group under which HAProxy should run. Only change this if you know what you're doing!
 
+
+    haproxy_admin_bind_address
+    haproxy_admin_port
+    haproxy_stats_bind_address
+    haproxy_stats_port
+    haproxy_stats_uri
+
+Enables stats/admin panels. Set the port numbers and uri to enable. Doesn't currently support auth options. Defaults to local host. 
+     
     haproxy_frontend_name: 'hafrontend'
     haproxy_frontend_bind_address: '*'
     haproxy_frontend_port: 80
@@ -40,6 +49,21 @@ HAProxy frontend configuration directives.
     haproxy_backend_httpchk: 'HEAD / HTTP/1.1\r\nHost:localhost'
 
 HAProxy backend configuration directives.
+
+    haproxy_backend_acls:
+      - name: '{{ your_acl_name }}'
+        var: 'path'
+        module: 'reg'
+        query: '.+?.+'
+
+A list of acls for the backend context to use. Requires haproxy_version 1.6+
+
+    haproxy_backend_conditions:
+      - action: 'http-request set-query %[query]&thing=added'
+        operator: 'if'
+        acl: '{{ your_acl_name }}'
+
+A list of conditionals used for backend. The acl must already be declared or haproxy will fail the restart. Requires haproxy_version 1.6+
 
     haproxy_backend_servers:
       - name: app1
@@ -72,4 +96,4 @@ MIT / BSD
 
 ## Author Information
 
-This role was created in 2015 by [Jeff Geerling](http://www.jeffgeerling.com/), author of [Ansible for DevOps](https://www.ansiblefordevops.com/).
+This role was created in 2015 by [Jeff Geerling](http://www.jeffgeerling.com/), author of [Ansible for DevOps](https://www.ansiblefordevops.com/). It has been extended to support parts of the 1.6+ haproxy release. 
