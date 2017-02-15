@@ -56,26 +56,27 @@ listen stats
 frontend {{ haproxy_frontend_name }}
     bind {{ haproxy_frontend_bind_address }}:{{ haproxy_frontend_port }}
     mode {{ haproxy_frontend_mode }}
-    default_backend {{ haproxy_backend_name }}
+    default_backend write
 {% for backend in haproxy_backends %}
 backend {{ backend['name'] }}
     mode {{ backend['mode'] }}
     balance {{ backend['balance_method'] }}
     option forwardfor
-{% if backend.has_key('httpchk') && backend['httpchk'] != '' %}
-    option httpchk {{ backend['httpchk' }}
+{% if backend.has_key('httpchk') and backend['httpchk'] != '' %}
+    option httpchk {{ backend['httpchk'] }}
 {% endif %}
 {% if haproxy_version|float >= 1.6 %}
-{% if backend.has_key('acls') && backend.has_key['conditions'] %}
+{% if backend.has_key('acls') and backend.has_key('conditions') %}
 {% for acl in backend['acls'] %}
-    acl {{ acl.name }} {{ acl.var }} -m {{ acl.module }} {{ acl.query }}
+    acl {{ acl['name'] }} {{ acl['var'] }} -m {{ acl['module'] }} {{ acl['query'] }}
 {% endfor %}
 {% for condition in backend['conditions'] %}
-    {{ condition.action }} {{ condition.operator }} {{ condition.acl }}
+    {{ condition['action'] }} {{ condition['operator'] }} {{ condition['acl']}}
 {% endfor %}
 {% endif %}
 {% endif %}
     cookie SERVERID insert indirect
 {% for server in backend['servers'] %}
-    server {{ server.name }} {{ server.address }} cookie {{ server.name }} check {{ server.options }}
+    server {{ server['name'] }} {{ server['address'] }} cookie {{ server['name'] }} check {{ server['options'] }}
+{% endfor %}
 {% endfor %}
