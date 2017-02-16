@@ -36,42 +36,69 @@ The user and group under which HAProxy should run. Only change this if you know 
 
 Enables stats/admin panels. Set the port numbers and uri to enable. Doesn't currently support auth options. Defaults to local host. 
      
-    haproxy_frontend_name: 'hafrontend'
-    haproxy_frontend_bind_address: '*'
-    haproxy_frontend_port: 80
-    haproxy_frontend_mode: 'http'
+    haproxy_frontends:
+      - name: front
+        bind_address: '*'
+	port: '9999'
+	mode: http
+	acls:
+	  - name: valid-ua
+	    criterion: 'hdr(user-agent)'
+	    patterns:
+	      - '-f exact-ua.lst'
+	      - '-i -f generic-ua/lst'
+	      - test
+	conditions:
+	  - action: use_backend backend_a
+	    operator: if
+	    acls:
+	      - valid-ua
+	default: backend_b
 
-HAProxy frontend configuration directives.
+    haproxy_frontends:
+      - "{{ write_frontend }}"
+      - "{{ read_frontend }}" 
 
-    haproxy_backend_name: 'habackend'
-    haproxy_backend_mode: 'http'
-    haproxy_backend_balance_method: 'roundrobin'
-    haproxy_backend_httpchk: 'HEAD / HTTP/1.1\r\nHost:localhost'
+HAProxy frontend configuration structure. Takes a list of dictionaries representing a frontend configuration. This lets you make multiple front ends, acls, and conditions using those acls. Flags for acl patterns should be included with the pattern. Condition logical operators should be included in the subsequent acls or as a standalone entry in the conditions['acls'] list. Frontends can also be declared elsewhere and included in the list. 
 
-HAProxy backend configuration directives.
+    haproxy_read_backend:
+      name: read
+      mode: http
+      balance_method: leastconn
+      httpchk: GET /health-check 
+      servers:
+        - name: read-a
+          address: read-a.example.com:80
+          options: cookie read-a check maxconn 1000
+        - name: read-b
+          address: read-b.example.com:80
+          options: cookie read-b check maxconn 1000
 
-    haproxy_backend_acls:
-      - name: '{{ your_acl_name }}'
-        var: 'path'
-        module: 'reg'
-        query: '.+?.+'
+HAProxy backend configuration structure. Takes a list of dictionaries representing a backend configuration. This allows for multiple backends, e.g. read write splits. The acls and conditions structure matches the frontend configuration. Servers are described in the server section. 
 
-A list of acls for the backend context to use. Requires haproxy_version 1.6+
+    acl:
+      name: your_acl_name
+      criterion: 'path'
+      patterns:
+        - '-m reg .+?.+'
 
-    haproxy_backend_conditions:
-      - action: 'http-request set-query %[query]&thing=added'
-        operator: 'if'
-        acl: '{{ your_acl_name }}'
+An example acl dictionary. Modules and flags should be included in the pattern or listed as their own pattern list item. Flags will carry through to the next entry if no flags exist for the entry. Requires haproxy_version 1.6+
 
-A list of conditionals used for backend. The acl must already be declared or haproxy will fail the restart. Requires haproxy_version 1.6+
+    condition:
+      action: 'http-request set-query %[query]&thing=added'
+      operator: 'if'
+      acls:
+        - this_acl
+        - AND other_acl
 
-    haproxy_backend_servers:
-      - name: app1
-        address: 192.168.0.1:80
-      - name: app2
-        address: 192.168.0.2:80
+A conditional dictionary. The acl must already be declared or haproxy will fail the restart. Requires haproxy_version 1.6+
 
-A list of backend servers (name and address) to which HAProxy will distribute requests.
+    server:
+      name: app1
+      address: 192.168.0.1:80
+      options: check maxconn 1000
+
+A server dictionary.
 
     haproxy_global_vars:
       - 'ssl-default-bind-ciphers ABCD+KLMJ:...'
@@ -88,7 +115,7 @@ None.
     - hosts: balancer
       sudo: yes
       roles:
-        - { role: geerlingguy.haproxy }
+        - { role: haproxy }
 
 ## License
 
