@@ -53,10 +53,24 @@ listen stats
     stats realm Haproxy\ Statistics
     stats uri {{ haproxy_stats_uri }}
 {% endif %}
-frontend {{ haproxy_frontend_name }}
-    bind {{ haproxy_frontend_bind_address }}:{{ haproxy_frontend_port }}
-    mode {{ haproxy_frontend_mode }}
-    default_backend write
+
+{% for frontend in haproxy_frontends %}
+frontend {{ frontend['name'] }}
+    bind {{ frontend['bind_address'] }}:{{ frontend['port'] }}
+    mode {{ frontend['mode'] }}
+{% if frontend.has_key('acls') %}{% for acl in frontend['acls'] %}
+    acl {{ acl['name'] }} {{ acl['criterion'] }} {% if acl.has_key('converters') %}{{ acl['converters'] }}{% endif %}{% if acl.has_key('flags') %} {{ acl['flags'] }}{% endif %}{% if acl.has_key('patterns') %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
+{% endfor %}{% endif %}
+
+{% if frontend.has_key('conditions') %}{% for condition in frontend['conditions'] %}
+    {{ condition['action'] }} {{ condition['operator'] }} {% for acl in condition['acls'] %}{{ acl }} {% endfor %}
+{% endfor %} {% endif %}
+
+{% if frontend.has_key('default') %}
+    default_backend {{ frontend['default'] }}
+{% endif %}
+
+{% endfor %}
 {% for backend in haproxy_backends %}
 backend {{ backend['name'] }}
     mode {{ backend['mode'] }}
