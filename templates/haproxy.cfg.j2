@@ -78,7 +78,7 @@ backend {{ backend['name'] }}
     mode {{ backend['mode'] }}
     balance {{ backend['balance_method'] }}
     option forwardfor
-{% if backend.has_key('httpchk') and backend['httpchk'] != '' %}
+{% if backend.has_key('httpchk')  %}
     option httpchk {{ backend['httpchk'] }}
 {% endif %}
 {% if (haproxy_version| float >= 1.6) and backend.has_key('acls') and backend.has_key('conditions') %}
