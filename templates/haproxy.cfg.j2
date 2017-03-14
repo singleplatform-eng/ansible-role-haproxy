@@ -58,9 +58,9 @@ listen stats
 frontend {{ frontend['name'] }}
     bind {{ frontend['bind_address'] }}:{{ frontend['port'] }}
     mode {{ frontend['mode'] }}
-{% if frontend.has_key('acls') and frontend.has_key('conditions') %}
+{% if 'acls' in frontend and 'conditions' in frontend %}
 {% for acl in frontend['acls'] %}
-    acl {{ acl['name'] }} {{ acl['criterion'] }} {% if acl.has_key('converters') %}{{ acl['converters'] }}{% endif %}{% if acl.has_key('patterns') %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
+    acl {{ acl['name'] }} {{ acl['criterion'] }} {% if 'converters' in acl %}{{ acl['converters'] }}{% endif %}{% if 'patterns' in acl %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
 {% endfor %}
 
 {% for condition in frontend['conditions'] %}
@@ -68,7 +68,7 @@ frontend {{ frontend['name'] }}
 {% endfor %}
 {% endif %}
 
-{% if frontend.has_key('default') %}
+{% if 'default' in frontend %}
     default_backend {{ frontend['default'] }}
 {% endif %}
 {% endfor %}
@@ -78,12 +78,12 @@ backend {{ backend['name'] }}
     mode {{ backend['mode'] }}
     balance {{ backend['balance_method'] }}
     option forwardfor
-{% if backend.has_key('httpchk')  %}
+{% if 'httpchk' in backend  %}
     option httpchk {{ backend['httpchk'] }}
 {% endif %}
-{% if (haproxy_version| float >= 1.6) and backend.has_key('acls') and backend.has_key('conditions') %}
+{% if (haproxy_version| float >= 1.6) and 'acls' in backend and 'conditions' in backend %}
 {% for acl in backend['acls'] %}
-    acl {{ acl['name'] }} {{ acl['criterion'] }} {% if acl.has_key('converters') %}{{ acl['converters'] }}{% endif %}{% if acl.has_key('patterns') %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
+    acl {{ acl['name'] }} {{ acl['criterion'] }} {% if 'converters' in acl %}{{ acl['converters'] }}{% endif %}{% if 'patterns' in acl %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
 {% endfor %}
 
 {% for condition in backend['conditions'] %}
