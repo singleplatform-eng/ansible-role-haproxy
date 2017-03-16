@@ -53,27 +53,46 @@ listen stats
     stats realm Haproxy\ Statistics
     stats uri {{ haproxy_stats_uri }}
 {% endif %}
-frontend {{ haproxy_frontend_name }}
-    bind {{ haproxy_frontend_bind_address }}:{{ haproxy_frontend_port }}
-    mode {{ haproxy_frontend_mode }}
-    default_backend {{ haproxy_backend_name }}
 
-backend {{ haproxy_backend_name }}
-    mode {{ haproxy_backend_mode }}
-    balance {{ haproxy_backend_balance_method }}
-    option forwardfor
-{% if haproxy_backend_httpchk != '' %}
-    option httpchk {{ haproxy_backend_httpchk }}
+{% for frontend in haproxy_frontends %}
+frontend {{ frontend['name'] }}
+    bind {{ frontend['bind_address'] }}:{{ frontend['port'] }}
+    mode {{ frontend['mode'] }}
+{% if 'acls' in frontend and 'conditions' in frontend %}
+{% for acl in frontend['acls'] %}
+    acl {{ acl['name'] }} {{ acl['criterion'] }} {% if 'converters' in acl %}{{ acl['converters'] }}{% endif %}{% if 'patterns' in acl %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
+{% endfor %}
+
+{% for condition in frontend['conditions'] %}
+    {{ condition['action'] }} {{ condition['operator'] }} {% for acl in condition['acls'] %}{{ acl }} {% endfor %}
+{% endfor %}
 {% endif %}
-{% if haproxy_version|float >= 1.6 %}
-{% for acl in haproxy_backend_acls %}
-    acl {{ acl.name }} {{ acl.var }} -m {{ acl.module }} {{ acl.query }}
+
+{% if 'default' in frontend %}
+    default_backend {{ frontend['default'] }}
+{% endif %}
 {% endfor %}
-{% for condition in haproxy_backend_conditions %}
-    {{ condition.action }} {{ condition.operator }} {{ condition.acl }}
+
+{% for backend in haproxy_backends %}
+backend {{ backend['name'] }}
+    mode {{ backend['mode'] }}
+    balance {{ backend['balance_method'] }}
+    option forwardfor
+{% if 'httpchk' in backend  %}
+    option httpchk {{ backend['httpchk'] }}
+{% endif %}
+{% if (haproxy_version| float >= 1.6) and 'acls' in backend and 'conditions' in backend %}
+{% for acl in backend['acls'] %}
+    acl {{ acl['name'] }} {{ acl['criterion'] }} {% if 'converters' in acl %}{{ acl['converters'] }}{% endif %}{% if 'patterns' in acl %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
 {% endfor %}
+
+{% for condition in backend['conditions'] %}
+    {{ condition['action'] }} {{ condition['operator'] }} {% for acl in condition['acls'] %}{{ acl }} {% endfor %}
+{% endfor %}
+
 {% endif %}
     cookie SERVERID insert indirect
-{% for backend in haproxy_backend_servers %}
-    server {{ backend.name }} {{ backend.address }} cookie {{ backend.name }} check {{ backend.options }}
+{% for server in backend['servers'] %}
+    server {{ server['name'] }} {{ server['address'] }} {{ server['options'] }}
+{% endfor %}
 {% endfor %}
