@@ -61,10 +61,12 @@ frontend {{ frontend['name'] }}
 {% if 'acls' in frontend and 'conditions' in frontend %}
 {% for acl in frontend['acls'] %}
     acl {{ acl['name'] }} {{ acl['criterion'] }} {% if 'converters' in acl %}{{ acl['converters'] }}{% endif %}{% if 'patterns' in acl %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
+
 {% endfor %}
 
 {% for condition in frontend['conditions'] %}
     {{ condition['action'] }} {{ condition['operator'] }} {% for acl in condition['acls'] %}{{ acl }} {% endfor %}
+
 {% endfor %}
 {% endif %}
 
@@ -84,15 +86,18 @@ backend {{ backend['name'] }}
 {% if (haproxy_version| float >= 1.6) and 'acls' in backend and 'conditions' in backend %}
 {% for acl in backend['acls'] %}
     acl {{ acl['name'] }} {{ acl['criterion'] }} {% if 'converters' in acl %}{{ acl['converters'] }}{% endif %}{% if 'patterns' in acl %}{% for pattern in acl['patterns'] %} {{ pattern }} {% endfor %} {% endif %}
+
 {% endfor %}
 
 {% for condition in backend['conditions'] %}
     {{ condition['action'] }} {{ condition['operator'] }} {% for acl in condition['acls'] %}{{ acl }} {% endfor %}
+
 {% endfor %}
 
 {% endif %}
     cookie SERVERID insert indirect
 {% for server in backend['servers'] %}
     server {{ server['name'] }} {{ server['address'] }} {{ server['options'] }}
+
 {% endfor %}
 {% endfor %}
